@@ -1,50 +1,24 @@
 ﻿using BackgroundTaskExample.Models;
-using System.Threading.Channels;
 
 namespace BackgroundTaskExample.Services
 {
-    public interface ITaskQueue
+    public class TaskQueue
     {
-        public Task QueueBackgroundWorkItemAsync(RequestModel requestModel);
+        private readonly Queue<RequestModel> _queue = new();
 
-        Task<RequestModel> DequeueAsync();
-
-        bool HasTask();
-    }
-
-    public class TaskQueue : ITaskQueue
-    {
-        private readonly Channel<RequestModel> _queue;
-
-        public TaskQueue(int capacity = 10)
+        public void Enqueue(RequestModel requestModel)
         {
-            var options = new BoundedChannelOptions(capacity)
-            {
-                FullMode = BoundedChannelFullMode.Wait
-            };
-            _queue = Channel.CreateBounded<RequestModel>(options);
+            _queue.Enqueue(requestModel);
         }
 
-        public async Task QueueBackgroundWorkItemAsync(RequestModel workItem)
+        public RequestModel Dequeue()
         {
-            if (workItem == null)
-            {
-                throw new ArgumentNullException(nameof(workItem));
-            }
-
-            await _queue.Writer.WriteAsync(workItem);
-        }
-
-        public async Task<RequestModel> DequeueAsync()
-        {
-            var workItem = await _queue.Reader.ReadAsync(CancellationToken.None);
-
-            return workItem;
+            return _queue.Dequeue();
         }
 
         public bool HasTask()
         {
-            return _queue.Reader.Count > 0;
+            return _queue.Count > 0;
         }
 
     }

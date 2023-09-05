@@ -4,10 +4,9 @@ namespace BackgroundTaskExample.Services
 {
     public class BackgroundTaskQueueService : BackgroundService
     {
-        public RequestModel _requestModel = new RequestModel();
-        public ITaskQueue _taskQueue { get; }
-
-        public BackgroundTaskQueueService(ITaskQueue taskQueue)
+        public RequestModel _requestModel = new();
+        public TaskQueue _taskQueue;
+        public BackgroundTaskQueueService(TaskQueue taskQueue)
         {
             _taskQueue = taskQueue;
         }
@@ -18,7 +17,7 @@ namespace BackgroundTaskExample.Services
             {
                 if (_taskQueue.HasTask())
                 {
-                    _requestModel = await _taskQueue.DequeueAsync();
+                    _requestModel = _taskQueue.Dequeue();
 
                     int executionDuration = _requestModel.TaskTimeInSeconds;
 
