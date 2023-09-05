@@ -4,7 +4,7 @@ namespace BackgroundTaskExample.Services
 {
     public class BackgroundTaskParallelService : BackgroundService
     {
-        public RequestModel _requestModel = new RequestModel();
+        public RequestModel _requestModel = new();
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             int executionDuration = _requestModel.TaskTimeInSeconds;

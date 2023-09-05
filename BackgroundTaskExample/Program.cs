@@ -14,7 +14,7 @@ namespace BackgroundTaskExample
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddSingleton<ITaskQueue, TaskQueue>();
+            builder.Services.AddSingleton<TaskQueue>();
             builder.Services.AddScoped<BackgroundTaskParallelService>();
             builder.Services.AddHostedService<BackgroundTaskQueueService>();
 
@@ -26,9 +26,6 @@ namespace BackgroundTaskExample
             app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
-
-            //app.UseAuthorization();
-
 
             app.MapControllers();
 

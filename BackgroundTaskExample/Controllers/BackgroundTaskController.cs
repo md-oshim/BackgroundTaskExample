@@ -9,12 +9,11 @@ namespace BackgroundTaskExample.Controllers
     public class BackgroundTaskController : ControllerBase
     {
         private readonly BackgroundTaskParallelService _backgroundTaskParallelService;
-        private readonly ITaskQueue _taskQueue;
+        private readonly TaskQueue _taskQueue;
 
         public BackgroundTaskController(
             BackgroundTaskParallelService backgroundTaskParallelService,
-            ITaskQueue taskQueue
-            )
+            TaskQueue taskQueue)
         {
             _backgroundTaskParallelService = backgroundTaskParallelService;
             _taskQueue = taskQueue;
@@ -29,9 +28,9 @@ namespace BackgroundTaskExample.Controllers
         }
 
         [HttpGet("queue")]
-        public async Task<ActionResult> Queue([FromQuery] RequestModel requestModel)
+        public ActionResult Queue([FromQuery] RequestModel requestModel)
         {
-            await _taskQueue.QueueBackgroundWorkItemAsync(requestModel);
+            _taskQueue.Enqueue(requestModel);
 
             return Ok(requestModel.TaskId);
         }
