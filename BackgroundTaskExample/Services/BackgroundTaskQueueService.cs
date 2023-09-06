@@ -6,31 +6,31 @@ namespace BackgroundTaskExample.Services
     {
         public RequestModel _requestModel = new();
         public TaskQueue _taskQueue;
-        public BackgroundTaskQueueService(TaskQueue taskQueue)
+        public BackgroundTaskResponseHub _BackgroundTaskResponseHub;
+        public BackgroundTaskQueueService(
+            TaskQueue taskQueue,
+            BackgroundTaskResponseHub backgroundTaskResponseHub)
         {
             _taskQueue = taskQueue;
+            _BackgroundTaskResponseHub = backgroundTaskResponseHub;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                if (_taskQueue.HasTask())
-                {
-                    _requestModel = _taskQueue.Dequeue();
+                await TaskQueue.Signal.WaitAsync(stoppingToken);
 
-                    int executionDuration = _requestModel.TaskTimeInSeconds;
+                _requestModel = _taskQueue.Dequeue();
 
-                    Console.WriteLine($"Queued, Starting execution of TaskId: {_requestModel?.TaskId}, TaskDuration: {executionDuration} seconds");
+                int executionDuration = _requestModel.TaskTimeInSeconds;
+                Console.WriteLine($"Queued, Starting execution of TaskId: {_requestModel?.TaskId}, TaskDuration: {executionDuration} seconds");
 
-                    await Task.Delay(1000 * executionDuration, stoppingToken);
+                await Task.Delay(1000 * executionDuration, stoppingToken);
 
-                    Console.WriteLine($"Completed queued execution of TaskId: {_requestModel?.TaskId}");
-                }
-                else
-                {
-                    await Task.Delay(1000);
-                }
+                Console.WriteLine($"Completed queued execution of TaskId: {_requestModel?.TaskId}");
+                await _BackgroundTaskResponseHub.SendMessageQueueTask(_requestModel.TaskId, _requestModel.ConnectionId);
+
             }
         }
 

@@ -5,6 +5,12 @@ namespace BackgroundTaskExample.Services
     public class BackgroundTaskParallelService : BackgroundService
     {
         public RequestModel _requestModel = new();
+        private readonly BackgroundTaskResponseHub _backgroundTaskResponseHub;
+
+        public BackgroundTaskParallelService(BackgroundTaskResponseHub backgroundTaskResponseHub)
+        {
+            _backgroundTaskResponseHub = backgroundTaskResponseHub;
+        }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             int executionDuration = _requestModel.TaskTimeInSeconds;
@@ -14,6 +20,9 @@ namespace BackgroundTaskExample.Services
             await Task.Delay(1000 * executionDuration, stoppingToken);
 
             Console.WriteLine($"Completed parallel execution of TaskId: {_requestModel?.TaskId}");
+
+            await _backgroundTaskResponseHub.SendMessageParallelTask(_requestModel.TaskId, _requestModel.ConnectionId);
+
         }
 
         public async Task StartParallelBackgroundTask(RequestModel requestModel)
@@ -23,6 +32,11 @@ namespace BackgroundTaskExample.Services
             await ExecuteAsync(CancellationToken.None);
         }
 
+    }
+
+    public interface IBackgroundTaskParallelService
+    {
+        Task StartParallelBackgroundTask(RequestModel requestModel);
     }
 
 }

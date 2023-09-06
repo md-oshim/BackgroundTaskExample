@@ -14,9 +14,22 @@ namespace BackgroundTaskExample
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddSingleton<BackgroundTaskResponseHub>();
             builder.Services.AddSingleton<TaskQueue>();
             builder.Services.AddScoped<BackgroundTaskParallelService>();
             builder.Services.AddHostedService<BackgroundTaskQueueService>();
+            builder.Services.AddSignalR();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(name: "DefaultCorsPolicy", builder =>
+                {
+                    builder.WithOrigins("http://localhost:4200")
+                           .AllowAnyHeader()
+                           .AllowAnyMethod()
+                           .AllowCredentials();
+                });
+            });
 
             var app = builder.Build();
 
@@ -25,9 +38,12 @@ namespace BackgroundTaskExample
             app.UseSwagger();
             app.UseSwaggerUI();
 
+            app.UseCors("DefaultCorsPolicy");
+
             app.UseHttpsRedirection();
 
             app.MapControllers();
+            app.MapHub<BackgroundTaskResponseHub>("/hubs/BackgroundTaskResponseHub");
 
             app.Run();
         }
