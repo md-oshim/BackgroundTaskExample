@@ -15,7 +15,8 @@ namespace BackgroundTaskExample
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddSingleton<BackgroundTaskResponseHub>();
-            builder.Services.AddSingleton<TaskQueue>();
+            //builder.Services.AddSingleton<TaskQueue>();
+            builder.Services.AddSingleton<IDocumentationQueue, DocumentationQueue>();
             builder.Services.AddScoped<BackgroundTaskParallelService>();
             builder.Services.AddHostedService<BackgroundTaskQueueService>();
             builder.Services.AddSignalR();

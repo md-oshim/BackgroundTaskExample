@@ -9,14 +9,21 @@ namespace BackgroundTaskExample.Controllers
     public class BackgroundTaskController : ControllerBase
     {
         private readonly BackgroundTaskParallelService _backgroundTaskParallelService;
-        private readonly TaskQueue _taskQueue;
+        private readonly IDocumentationQueue _documentationQueue;
+        private readonly ILogger<BackgroundTaskController> _logger;
+
+        //private readonly TaskQueue _taskQueue;
 
         public BackgroundTaskController(
             BackgroundTaskParallelService backgroundTaskParallelService,
-            TaskQueue taskQueue)
+            //TaskQueue taskQueue
+            IDocumentationQueue documentationQueue,
+            ILogger<BackgroundTaskController> logger)
         {
             _backgroundTaskParallelService = backgroundTaskParallelService;
-            _taskQueue = taskQueue;
+            //_taskQueue = taskQueue;
+            _documentationQueue = documentationQueue;
+            _logger = logger;
         }
 
         [HttpGet("parallel")]
@@ -28,13 +35,48 @@ namespace BackgroundTaskExample.Controllers
         }
 
         [HttpGet("queue")]
-        public ActionResult Queue([FromQuery] RequestModel requestModel)
+        public async Task<ActionResult> Queue([FromQuery] RequestModel requestModel)
         {
-            _taskQueue.Enqueue(requestModel);
+            await _documentationQueue.Enqueue(requestModel);
 
             return Ok(requestModel.TaskId);
         }
 
+
+        private async ValueTask BuildWorkItem(CancellationToken token)
+        {
+            // Simulate three 5-second tasks to complete
+            // for each enqueued work item
+
+            int delayLoop = 0;
+            var guid = Guid.NewGuid().ToString();
+
+            while (!token.IsCancellationRequested && delayLoop < 3)
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5), token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Prevent throwing if the Delay is cancelled
+                }
+
+                delayLoop++;
+
+                _logger.LogInformation("Queued Background Task {Guid} is running. "
+                                       + "{DelayLoop}/3", guid, delayLoop);
+            }
+
+            if (delayLoop == 3)
+            {
+                _logger.LogInformation("Queued Background Task {Guid} is complete.", guid);
+            }
+            else
+            {
+                _logger.LogInformation("Queued Background Task {Guid} was cancelled.", guid);
+            }
+        }
     }
 
 }

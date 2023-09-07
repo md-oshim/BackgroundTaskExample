@@ -5,13 +5,14 @@ namespace BackgroundTaskExample.Services
     public class BackgroundTaskQueueService : BackgroundService
     {
         public RequestModel _requestModel = new();
-        public TaskQueue _taskQueue;
+        private readonly IDocumentationQueue _documentationQueue;
+
         public BackgroundTaskResponseHub _BackgroundTaskResponseHub;
         public BackgroundTaskQueueService(
-            TaskQueue taskQueue,
+            IDocumentationQueue documentationQueue,
             BackgroundTaskResponseHub backgroundTaskResponseHub)
         {
-            _taskQueue = taskQueue;
+            _documentationQueue = documentationQueue;
             _BackgroundTaskResponseHub = backgroundTaskResponseHub;
         }
 
@@ -19,17 +20,26 @@ namespace BackgroundTaskExample.Services
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                await TaskQueue.Signal.WaitAsync(stoppingToken);
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    var workItem = await _documentationQueue.Dequeue(stoppingToken);
 
-                _requestModel = _taskQueue.Dequeue();
+                    try
+                    {
+                        _requestModel = workItem;
 
-                int executionDuration = _requestModel.TaskTimeInSeconds;
-                Console.WriteLine($"Queued, Starting execution of TaskId: {_requestModel?.TaskId}, TaskDuration: {executionDuration} seconds");
+                        int executionDuration = _requestModel.TaskTimeInSeconds;
+                        Console.WriteLine($"Queued, Starting execution of TaskId: {_requestModel?.TaskId}, TaskDuration: {executionDuration} seconds");
 
-                await Task.Delay(1000 * executionDuration, stoppingToken);
+                        await Task.Delay(1000 * executionDuration, stoppingToken);
 
-                Console.WriteLine($"Completed queued execution of TaskId: {_requestModel?.TaskId}");
-                await _BackgroundTaskResponseHub.SendMessageQueueTask(_requestModel.TaskId, _requestModel.ConnectionId);
+                        Console.WriteLine($"Completed queued execution of TaskId: {_requestModel?.TaskId}");
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
 
             }
         }
